@@ -1,0 +1,12 @@
+{
+  "name": "calc2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:codelocation/calc2.git",
+  "author": "Bespechuk Yana",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "jest": "^27.4.5"
+  }
+}
