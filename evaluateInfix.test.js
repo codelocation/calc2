@@ -4,7 +4,7 @@ import {
 	readNextNumber,
 	evaluateRPN,
 	evaluateInfix
-} from './index';
+} from './evaluateInfix';
 
 describe('readNextNumber', () => {
 	it('should read number for valid input', () => {
