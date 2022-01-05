@@ -1,9 +1,26 @@
-/**
- * Reads the next number in input starting from index start. Returns the end index and the parsed number.
- * @param {*} input 
- * @param {*} start 
- */
+import { Stack } from "./Stack";
+import { removeWhitespaces } from "./utils";
+
 const DIGITS = '0123456789';
+const OPERATORS = {
+	'+': {
+		priority: 1,
+		apply: (a, b) => a + b,
+	},
+	'-': {
+		priority: 1,
+		apply: (a, b) => a - b,
+	},
+	'*': {
+		priority: 2,
+		apply: (a, b) => a * b,
+	},
+	'/': {
+		priority: 2,
+		apply: (a, b) => a / b,
+	},
+};
+
 export const readNextNumber = (input, start) => {
 	let end = start;
 	if (start >= input.length) {
@@ -28,6 +45,10 @@ export const readNextNumber = (input, start) => {
 };
 
 export const convertInfix2Array = (infix) => {
+	infix = removeWhitespaces(infix);
+	if (infix.length === 0) {
+		return [];
+	}
 	const arr = [];
 	let start = 0;
 	let result;
@@ -43,17 +64,79 @@ export const convertInfix2Array = (infix) => {
 	return arr;
 };
 
-// console.log(convertInfix2Array('0')); // [0]
-// console.log(convertInfix2Array('123')); // [123]
-// console.log(convertInfix2Array('1+2')); // [1,'+',2]
-// console.log(convertInfix2Array('-1')); // [-1]
-// console.log(convertInfix2Array('-1+2')); // [-1, +, 2]
-// console.log(convertInfix2Array('-1+-2+3')); // [-1, +, -2, +, 3]
-// console.log(convertInfix2Array('-1-3')); // [-1, -, 3]
-// console.log(convertInfix2Array('-1*-2+5-1324/890-4'));
-// console.log(convertInfix2Array('1*+2+3'));
-// 1-
+// Dijkstra's shunting-yard algorithm
+export const convertInfix2RPN = (infix) => {
+	const rpn = [];
+	const stack = new Stack();
 
-// const computeInfixExpr = (expr) => {
+	for (const token of infix) {
+		if (typeof token === 'number') {
+			rpn.push(token);
+		} else if (token in OPERATORS) {
+			while (!stack.isEmpty()) {
+				const top = stack.peek();
+				if (!(top in OPERATORS) || OPERATORS[top].priority < OPERATORS[token].priority) {
+					break;
+				}
+				rpn.push(top);
+				stack.pop();
+			}
+			stack.push(token);
+		} else if (token === '(') {
+			stack.push(token);
+		} else if (token === ')') {
+			while (!stack.isEmpty()) {
+				let top = stack.peek();
+				if (top === '(') {
+					break;
+				}
+				rpn.push(top);
+				stack.pop();
+			}
+			if (stack.isEmpty()) {
+				throw new Error('opening parenthesis expected');
+			}
+			stack.pop();
+		}
+	}
 
-// };
+	while (!stack.isEmpty()) {
+		const top = stack.pop();
+		if (top === '(') {
+			throw new Error('closing parenthesis expected');
+		}
+		rpn.push(top);
+	}
+
+	return rpn;
+};
+
+export const evaluateRPN = (rpn) => {
+	if (rpn.length === 0) {
+		return 0;
+	}
+	const stack = new Stack();
+	for (const token of rpn) {
+		if (!(token in OPERATORS)) {
+			stack.push(token);
+		} else {
+			const rightOp = stack.pop();
+			const leftOp = stack.pop();
+			const result = OPERATORS[token].apply(leftOp, rightOp);
+			stack.push(result);
+		}
+	}
+	const result = stack.pop();
+	if (!stack.isEmpty()) {
+		throw new Error('failed to compute RPN expression');
+	}
+	return result;
+};
+
+export const evaluateInfix = (infix) => {
+	return evaluateRPN(
+		convertInfix2RPN(
+			convertInfix2Array(infix)
+		)
+	);
+};
